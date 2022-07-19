@@ -5,7 +5,7 @@ To compile createMatrix.c:
 
 To run createMatrix:
   ./createMatrix <# of Vertices>
-
+ - This will create a file called "sample.txt"
 To compile FFA_ser.chpl:
   chpl FFA_ser.chpl --fast
   
