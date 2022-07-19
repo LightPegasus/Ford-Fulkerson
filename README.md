@@ -6,8 +6,14 @@ To compile createMatrix.c:
 To run createMatrix:
   ./createMatrix <# of Vertices>
 
-To compile FFA2.chpl:
-  chpl FFA2.chpl --fast
+To compile FFA_ser.chpl:
+  chpl FFA_ser.chpl --fast
   
 To run:
-  ./FFA2 -nl <#locales> --f=sample.txt --V=<# of Vertices>
+  ./FFA_ser -nl <#locales> --f=sample.txt --V=<# of Vertices>
+
+To compile FFA_para.chpl:
+  chpl FFA_para.chpl --fast
+  
+To run:
+  ./FFA_para -nl <#locales> --f=sample.txt --V=<# of Vertices>
