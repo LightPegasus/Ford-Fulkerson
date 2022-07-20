@@ -52,7 +52,7 @@ proc bfs(resGraph: [], s: int, t: int, parent: [] int)
             }
           }
           forall j in SetNeighbor with (ref found) {
-            if (j == t) {
+            if (j == t) { //if the next neighbor of i is the sink (dest) vertex
               parent[j] = i;
               found = true;
             }
