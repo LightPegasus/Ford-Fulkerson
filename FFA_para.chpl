@@ -10,11 +10,14 @@ use Time;
 use IO;
 use List;
 use BlockDist;
+use DistributedBag;
+use Set;
 
 config var V: int = 6; // number of vertices in the graph
 config var f: string;
 var t: Timer;
 var total_t: Timer;
+var bfs_t: Timer;
 
 /* Function that uses BFS algorithm to find a path from the source 's' to
  * sink 't' in the residual graph, and it stores the path in the parent array
@@ -27,33 +30,44 @@ var total_t: Timer;
  */
 proc bfs(resGraph: [], s: int, t: int, parent: [] int) 
 {
+  bfs_t.start(); //start timer
+  
   var visited: [0..V-1] bool = false;
-  var queue = new LinkedList(int);
-     
-  // add the source vertex to visited array and queue
-  queue.append(s);
+  var found: bool = false;
+  
   visited[s] = true;
-  parent[s] = -1;
+  parent[s] = -1; 
+  var SetCurF = new DistBag(int, Locales); //Current Frontier
+  var SetNextF = new DistBag(int, Locales); //Next Frontier
+  SetCurF.add(s); //start with the root vertex
 
-  // BFS algorithm
-  while (queue.size != 0) {
-    var u = queue.pop_front();
-
-    for i in 0..(V-1) {
-      if (visited[i] == false && resGraph[u, i] > 0) {
-        // If the path from source to sink exists,
-        // then set its parent and return true
-        if (i == t) {
-          parent[i] = u;
-          return true;
+  while (!SetCurF.isEmpty()) {
+    coforall loc in Locales with(ref SetNextF, ref found) { on loc {
+      forall i in SetCurF with (ref found){
+        if i.locale.id == loc.id {
+          var SetNeighbor = new set(int);
+          forall k in 0..V-1 with (ref SetNeighbor){ //Find all neighbors of i
+            if (resGraph[i, k] > 0 && visited[k] == false) { //dont add zero (e.g. no connection)
+              SetNeighbor.add(k);
+            }
+          }
+          forall j in SetNeighbor with (ref found) {
+            if (j == t) {
+              parent[j] = i;
+              found = true;
+            }
+            else {
+              SetNextF.add(j);
+              parent[j] = i;
+              visited[j] = true;
+            }
+          }
         }
-        queue.append(i);
-        parent[i] = u;
-        visited[i] = true;
-      }
-    }
+      }   
+    }} //end of coforall and loc  
+    SetCurF <=> SetNextF;
+    SetNextF.clear();
   }
-  // Did not find path from source to sink
   return false;
 }//End of bfs function
 
@@ -71,7 +85,8 @@ proc FordFulkerson(resGraph: [], s: int, t: int)
   var parent: [0..V-1] int;
   var max_flow: int = 0; // no flow initially
   
-  while (bfs(resGraph, s, t, parent)) {   
+  while (bfs(resGraph, s, t, parent)) {
+    bfs_t.stop();
     // Find the minimum residual capacity of the edges
     var path_flow: int = max(int);
     var q = new list((int, int));  
@@ -128,5 +143,6 @@ t.stop();
 
 total_t.stop();
 writeln("The maximum possible flow is ", max_flow);
+writeln("BFS algorithm: ", bfs_t.elapsed());
 writeln("Ford-Fulkerson: ", t.elapsed());
 writeln("For total time: ", total_t.elapsed());
